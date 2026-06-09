@@ -8,6 +8,11 @@ import {
   Plus,
   Minus,
   ImageOff,
+  UserRound,
+  HandHeart,
+  Hash,
+  ShoppingBag,
+  AlertCircle,
 } from "lucide-react";
 import { CATEGORIES, formatCRC } from "./data.js";
 import { subscribeReservations, addReservation, subscribeProducts } from "./firebase.js";
@@ -109,14 +114,45 @@ export default function App() {
           <h1 className="font-display text-4xl sm:text-5xl text-stone-900 leading-tight italic font-normal">
             {S.header.title}
           </h1>
-          <h2 className="font-display text-3xl sm:text-3xl text-stone-900 leading-tight italic font-normal">
-            {S.header.instructionsTitle}
-          </h2>
           <p className="mt-4 text-stone-600 max-w-xl leading-relaxed">
             {S.header.p1}
           </p>
-          <p className="mt-4 text-stone-600 max-w-xl leading-relaxed">
+          <p className="mt-3 text-stone-600 max-w-xl leading-relaxed">
             {S.header.p2}
+          </p>
+
+          <h2 className="mt-6 font-display text-3xl text-stone-900 leading-tight italic font-normal">
+            {S.header.instructionsTitle}
+          </h2>
+
+          {/* Steps */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+            {[
+              { icon: UserRound,   text: S.header.p3 },
+              { icon: HandHeart,   text: S.header.p4 },
+              { icon: Hash,        text: S.header.p5 },
+              { icon: ShoppingBag, text: S.header.p6 },
+            ].map(({ icon: Icon, text }, i) => (
+              <div key={i} className="flex items-start gap-3 bg-white rounded-xl border border-stone-200 p-4 shadow-sm">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-emerald-700" />
+                </div>
+                <p className="text-sm text-stone-600 leading-snug">{text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Reminder */}
+          <div className="mt-4 max-w-xl flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800 leading-snug">{S.header.p7}</p>
+          </div>
+
+          {/* Final message */}
+          <p className="mt-5 max-w-xl text-center text-stone-500 italic text-sm flex items-center justify-center gap-2">
+            <Heart className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600 flex-shrink-0" />
+            {S.header.p8}
+            <Heart className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600 flex-shrink-0" />
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">

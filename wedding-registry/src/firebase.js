@@ -6,6 +6,7 @@ import {
   addDoc,
   deleteDoc,
   setDoc,
+  updateDoc,
   doc,
   serverTimestamp,
   query,
@@ -49,6 +50,10 @@ export async function addProduct(product) {
 
 export async function deleteProduct(id) {
   return await deleteDoc(doc(db, PRODUCTS, id));
+}
+
+export async function updateProduct(id, data) {
+  return await updateDoc(doc(db, PRODUCTS, id), data);
 }
 
 export async function seedProducts(items) {

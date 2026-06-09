@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { SignIn, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import {
-  Trash2, Plus, RefreshCw, Package, ClipboardList, ChevronDown, ChevronUp,
+  Trash2, Plus, RefreshCw, Package, ClipboardList, ChevronDown, ChevronUp, Download, Pencil, X,
 } from "lucide-react";
 import {
   subscribeProducts,
   subscribeReservations,
   addProduct,
   deleteProduct,
+  updateProduct,
   seedProducts,
+  removeReservation,
 } from "./firebase.js";
 import { SEED_ITEMS, CATEGORIES, formatCRC } from "./data.js";
 
 const IMG_URL = (sku) => `https://ferreteriavidri.com/images/items/large/${sku}.jpg`;
 const EMPTY_FORM = { id: "", name: "", price: "", qty: "", cat: "vajilla", url: "" };
+
+const toSentenceCase = (str) => {
+  const s = str.trim();
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+};
+
+function downloadCSV(filename, rows) {
+  const csv = rows.map(r => r.map(cell => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function AdminPage() {
   return (
@@ -39,7 +55,9 @@ function AdminPanel() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [expandedProduct, setExpandedProduct] = useState(null);
+  const [deletingReservation, setDeletingReservation] = useState(null);
   const [errors, setErrors] = useState({});
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => subscribeProducts(setProducts), []);
   useEffect(() => subscribeReservations(setReservations), []);
@@ -57,27 +75,44 @@ function AdminPanel() {
     return e;
   };
 
-  const handleAdd = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const e2 = validate();
     if (Object.keys(e2).length) { setErrors(e2); return; }
     setSaving(true);
     try {
-      await addProduct({
-        id: form.id.trim(),
-        name: form.name.trim(),
+      const data = {
+        name: toSentenceCase(form.name),
         price: Number(form.price),
         qty: Number(form.qty),
         cat: form.cat,
         url: form.url.trim(),
         img: IMG_URL(form.id.trim()),
-        order: products.length,
-      });
+      };
+      if (editingId) {
+        await updateProduct(editingId, data);
+        setEditingId(null);
+      } else {
+        await addProduct({ id: form.id.trim(), ...data, order: products.length });
+      }
       setForm(EMPTY_FORM);
       setErrors({});
     } finally {
       setSaving(false);
     }
+  };
+
+  const startEdit = (p) => {
+    setForm({ id: p.id, name: p.name, price: String(p.price), qty: String(p.qty), cat: p.cat, url: p.url });
+    setEditingId(p.id);
+    setErrors({});
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setErrors({});
   };
 
   const handleDelete = async (id) => {
@@ -149,26 +184,36 @@ function AdminPanel() {
           )}
 
           {/* Add product form */}
-          <div className="bg-white border border-stone-200 rounded-2xl p-5">
+          <div className={`bg-white border rounded-2xl p-5 ${editingId ? "border-emerald-300 ring-1 ring-emerald-200" : "border-stone-200"}`}>
             <h2 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Agregar producto
+              {editingId ? <><Pencil className="w-4 h-4 text-emerald-700" /> Editando producto</> : <><Plus className="w-4 h-4" /> Agregar producto</>}
             </h2>
-            <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="SKU (código Novex)" error={errors.id}>
                 <input
                   value={form.id}
                   onChange={(e) => setForm({ ...form, id: e.target.value })}
                   placeholder="ej. 478662"
-                  className={input(errors.id)}
+                  disabled={!!editingId}
+                  className={`${input(errors.id)} disabled:bg-stone-50 disabled:text-stone-400`}
                 />
               </Field>
               <Field label="Nombre" error={errors.name}>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="ej. Taza de cerámica 420ml"
-                  className={input(errors.name)}
-                />
+                <div className="flex gap-2">
+                  <input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="ej. Taza de cerámica 420ml"
+                    className={input(errors.name)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, name: toSentenceCase(form.name) })}
+                    className="px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg text-stone-500 hover:text-stone-800 hover:border-stone-400 whitespace-nowrap"
+                  >
+                    Aa
+                  </button>
+                </div>
               </Field>
               <Field label="Precio (₡)" error={errors.price}>
                 <input
@@ -207,22 +252,41 @@ function AdminPanel() {
                   className={input(errors.url)}
                 />
               </Field>
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 flex gap-2">
                 <button
                   type="submit"
                   disabled={saving}
                   className="px-5 py-2.5 bg-emerald-800 text-white rounded-xl text-sm font-medium hover:bg-emerald-900 disabled:opacity-50"
                 >
-                  {saving ? "Guardando..." : "Agregar producto"}
+                  {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Agregar producto"}
                 </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="px-4 py-2.5 border border-stone-200 rounded-xl text-sm font-medium text-stone-600 hover:border-stone-400 flex items-center gap-1.5"
+                  >
+                    <X className="w-3.5 h-3.5" /> Cancelar
+                  </button>
+                )}
               </div>
             </form>
           </div>
 
           {/* Product list */}
           <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-stone-100">
+            <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
               <h2 className="font-semibold text-stone-900">Productos actuales</h2>
+              <button
+                onClick={() => downloadCSV("productos.csv", [
+                  ["SKU", "Nombre", "Precio", "Cantidad", "Apartados", "Categoría", "URL"],
+                  ...products.map(p => [p.id, p.name, p.price, p.qty, reservedCount(p.id), p.cat, p.url]),
+                ])}
+                disabled={products.length === 0}
+                className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-800 disabled:opacity-30"
+              >
+                <Download className="w-3.5 h-3.5" /> Exportar CSV
+              </button>
             </div>
             {products.length === 0 ? (
               <p className="text-center py-10 text-stone-400 text-sm">Sin productos</p>
@@ -241,6 +305,12 @@ function AdminPanel() {
                         <p className="text-sm font-medium text-stone-900 truncate">{p.name}</p>
                         <p className="text-xs text-stone-500">{formatCRC(p.price)} · {reserved}/{p.qty} apartados · {p.cat}</p>
                       </div>
+                      <button
+                        onClick={() => startEdit(p)}
+                        className="p-2 text-stone-400 hover:text-emerald-700 transition-colors flex-shrink-0"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleDelete(p.id)}
                         disabled={deletingId === p.id}
@@ -272,6 +342,23 @@ function AdminPanel() {
       {/* ── Reservations tab ── */}
       {tab === "reservations" && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <button
+              onClick={() => {
+                const rows = [["Producto", "SKU", "Nombre invitado", "Cantidad"]];
+                products.forEach(p => {
+                  (reservations[p.id] || []).forEach(r => {
+                    rows.push([p.name, p.id, r.name, r.qty]);
+                  });
+                });
+                downloadCSV("apartados.csv", rows);
+              }}
+              disabled={Object.keys(reservations).length === 0}
+              className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-800 disabled:opacity-30"
+            >
+              <Download className="w-3.5 h-3.5" /> Exportar CSV
+            </button>
+          </div>
           {products.length === 0 ? (
             <p className="text-center py-10 text-stone-400 text-sm">Sin productos cargados</p>
           ) : (
@@ -307,7 +394,19 @@ function AdminPanel() {
                         {rsvs.map((r) => (
                           <li key={r.docId} className="flex items-center justify-between px-5 py-2.5 text-sm">
                             <span className="text-stone-800">{r.name}</span>
-                            <span className="text-stone-500">{r.qty} unidad{r.qty !== 1 ? "es" : ""}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-stone-500">{r.qty} unidad{r.qty !== 1 ? "es" : ""}</span>
+                              <button
+                                onClick={async () => {
+                                  setDeletingReservation(r.docId);
+                                  try { await removeReservation(r.docId); } finally { setDeletingReservation(null); }
+                                }}
+                                disabled={deletingReservation === r.docId}
+                                className="p-1 text-stone-400 hover:text-red-600 disabled:opacity-30 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </li>
                         ))}
                       </ul>

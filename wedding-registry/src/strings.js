@@ -5,6 +5,12 @@ export const S = {
     instructionsTitle: "Instrucciones:",
     p1: "Gracias por acompañarnos en este día. Si deseas obsequiarnos algo, hemos preparado esta lista con artículos que necesitamos. Aparta uno aquí para evitar duplicados y luego cómpralo directamente en Novex.",
     p2: "Los artículos que compres en la página web de Novex o directamente en la tienda física tienes que recogerlos y llevarlos al té. Novex no cuenta con lista de regalos como tal.",
+    p3: "1. Ingresa tu nombre en la sección 'Antes de Apartar'.",
+    p4: "2. Dale click al botón 'Apartar' del artículo que deseas adquirir.",
+    p5: "3. Selecciona la cantidad de ese artículo que deseas adquirir.",
+    p6: "4. La parte más importante, compra el artículo de la página de Novex o directamente en la tienda física.",
+    p7: "No te olvides que tienes que recogerlo y llevarlo al té de cocina.",
+    p8: "¡Los amamos y gracias por ayudarnos a cumplir este sueño de casarnos!"
   },
   stats: {
     available: "disponibles",
