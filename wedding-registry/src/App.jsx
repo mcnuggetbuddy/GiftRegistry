@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import {
   ExternalLink,
   Check,
@@ -13,6 +13,7 @@ import { ITEMS, CATEGORIES, formatCRC } from "./data.js";
 import { subscribeReservations, addReservation } from "./firebase.js";
 
 const NAME_KEY = "wedding_registry_guest_name";
+const EMPTY_ARR = [];
 
 export default function App() {
   const [reservations, setReservations] = useState({});
@@ -23,14 +24,13 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [hideTaken, setHideTaken] = useState(false);
   const [modalItem, setModalItem] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeReservations((grouped) => {
       setReservations(grouped);
-      setLoading(false);
     });
     return unsubscribe;
   }, []);
@@ -39,10 +39,15 @@ export default function App() {
     try { localStorage.setItem(NAME_KEY, guestName); } catch {}
   }, [guestName]);
 
-  const reservedCount = (id) =>
-    (reservations[id] || []).reduce((s, r) => s + r.qty, 0);
+  const reservedCount = useCallback(
+    (id) => (reservations[id] || []).reduce((s, r) => s + r.qty, 0),
+    [reservations]
+  );
 
-  const remaining = (item) => Math.max(0, item.qty - reservedCount(item.id));
+  const remaining = useCallback(
+    (item) => Math.max(0, item.qty - reservedCount(item.id)),
+    [reservedCount]
+  );
 
   const filtered = useMemo(() => {
     return ITEMS.filter((it) => {
@@ -51,7 +56,7 @@ export default function App() {
       if (hideTaken && remaining(it) === 0) return false;
       return true;
     });
-  }, [activeCat, search, hideTaken, reservations]);
+  }, [activeCat, search, hideTaken, remaining]);
 
   const stats = useMemo(() => {
     const totalItems = ITEMS.reduce((s, it) => s + it.qty, 0);
@@ -182,8 +187,8 @@ export default function App() {
                 key={item.id}
                 item={item}
                 remaining={remaining(item)}
-                reservations={reservations[item.id] || []}
-                onReserve={() => setModalItem(item)}
+                reservations={reservations[item.id] || EMPTY_ARR}
+                onReserve={setModalItem}
               />
             ))}
           </div>
@@ -216,13 +221,14 @@ export default function App() {
   );
 }
 
-function ItemCard({ item, remaining, reservations, onReserve }) {
+const ItemCard = memo(function ItemCard({ item, remaining, reservations, onReserve }) {
   const isFull = remaining === 0;
   const [imgError, setImgError] = useState(false);
+  const handleReserve = useCallback(() => onReserve(item), [onReserve, item]);
 
   return (
     <article
-      className={`fade-up card-hover bg-white border rounded-2xl overflow-hidden flex flex-col ${
+      className={`card-hover bg-white border rounded-2xl overflow-hidden flex flex-col ${
         isFull ? "border-stone-200 opacity-75" : "border-stone-200"
       }`}
     >
@@ -268,7 +274,7 @@ function ItemCard({ item, remaining, reservations, onReserve }) {
 
         <div className="mt-auto flex gap-2">
           <button
-            onClick={onReserve}
+            onClick={handleReserve}
             disabled={isFull}
             className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               isFull
@@ -290,7 +296,7 @@ function ItemCard({ item, remaining, reservations, onReserve }) {
       </div>
     </article>
   );
-}
+});
 
 function ReserveModal({ item, remaining, guestName, submitting, onClose, onConfirm }) {
   const [qty, setQty] = useState(1);

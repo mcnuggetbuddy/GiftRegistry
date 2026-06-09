@@ -1,5 +1,5 @@
 // Novex hosts product images at: https://ferreteriavidri.com/images/items/thumb/{SKU}.jpg
-const img = (sku) => `https://ferreteriavidri.com/images/items/thumb/${sku}.jpg`;
+const img = (sku) => `https://ferreteriavidri.com/images/items/large/${sku}.jpg`;
 
 export const ITEMS = [
   // Vajilla
