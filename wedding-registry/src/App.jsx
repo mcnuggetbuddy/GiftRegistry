@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ITEMS, CATEGORIES, formatCRC } from "./data.js";
 import { subscribeReservations, addReservation } from "./firebase.js";
+import { S } from "./strings.js";
 
 const NAME_KEY = "wedding_registry_guest_name";
 const EMPTY_ARR = [];
@@ -71,17 +72,17 @@ export default function App() {
 
   const handleReserve = async (item, qty) => {
     if (!guestName.trim()) {
-      showToast("error", "Por favor escribe tu nombre primero");
+      showToast("error", S.toast.noName);
       return;
     }
     setSubmitting(true);
     try {
       await addReservation(item.id, guestName.trim(), qty);
       setModalItem(null);
-      showToast("success", `¡Gracias, ${guestName.trim()}! Apartaste ${qty} × ${item.name}`);
+      showToast("success", S.toast.success(guestName.trim(), qty, item.name));
     } catch (e) {
       console.error(e);
-      showToast("error", "No se pudo apartar. Intenta de nuevo.");
+      showToast("error", S.toast.error);
     } finally {
       setSubmitting(false);
     }
@@ -94,24 +95,30 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-5 pt-10 pb-8">
           <div className="flex items-center gap-2 text-emerald-700 mb-3">
             <Heart className="w-4 h-4 fill-emerald-700" />
-            <span className="text-xs uppercase tracking-[0.2em]">Lista de regalos</span>
+            <span className="text-xs uppercase tracking-[0.2em]">{S.header.badge}</span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl text-stone-900 leading-tight italic font-normal">
-            Para nuestro nuevo hogar
+            {S.header.title}
           </h1>
+          <h2 className="font-display text-3xl sm:text-3xl text-stone-900 leading-tight italic font-normal">
+            {S.header.instructionsTitle}
+          </h2>
           <p className="mt-4 text-stone-600 max-w-xl leading-relaxed">
-            Gracias por acompañarnos en este día. Si deseas obsequiarnos algo, hemos preparado esta lista con artículos que necesitamos. Aparta uno aquí para evitar duplicados y luego cómpralo directamente en Novex.
+            {S.header.p1}
+          </p>
+          <p className="mt-4 text-stone-600 max-w-xl leading-relaxed">
+            {S.header.p2}
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="px-3 py-1.5 rounded-full bg-white border border-stone-200">
-              <strong className="text-stone-900">{stats.available}</strong> disponibles
+              <strong className="text-stone-900">{stats.available}</strong> {S.stats.available}
             </span>
             <span className="px-3 py-1.5 rounded-full bg-emerald-700 text-white">
-              <strong>{stats.reservedItems}</strong> apartados
+              <strong>{stats.reservedItems}</strong> {S.stats.reserved}
             </span>
             <span className="px-3 py-1.5 rounded-full bg-white border border-stone-200">
-              <strong className="text-stone-900">{ITEMS.length}</strong> productos
+              <strong className="text-stone-900">{ITEMS.length}</strong> {S.stats.products}
             </span>
           </div>
         </div>
@@ -121,13 +128,13 @@ export default function App() {
         {/* Name input */}
         <div className="bg-white border border-stone-200 rounded-2xl p-5 mb-5 shadow-sm">
           <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
-            Antes de apartar — ¿Cuál es tu nombre?
+            {S.name.label}
           </label>
           <input
             type="text"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
-            placeholder="Tu nombre"
+            placeholder={S.name.placeholder}
             className="w-full text-lg font-display italic placeholder:text-stone-300 border-b-2 border-stone-200 focus:border-emerald-700 outline-none pb-2 transition-colors bg-transparent"
           />
         </div>
@@ -140,7 +147,7 @@ export default function App() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar..."
+              placeholder={S.filters.searchPlaceholder}
               className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-emerald-700"
             />
           </div>
@@ -151,7 +158,7 @@ export default function App() {
               onChange={(e) => setHideTaken(e.target.checked)}
               className="accent-emerald-700"
             />
-            Ocultar apartados
+            {S.filters.hideTaken}
           </label>
         </div>
 
@@ -177,9 +184,9 @@ export default function App() {
 
         {/* Grid */}
         {loading ? (
-          <div className="text-center py-20 text-stone-400">Cargando...</div>
+          <div className="text-center py-20 text-stone-400">{S.grid.loading}</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-stone-400 font-display italic">No hay artículos en esta vista</div>
+          <div className="text-center py-20 text-stone-400 font-display italic">{S.grid.empty}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((item) => (
@@ -195,7 +202,7 @@ export default function App() {
         )}
 
         <footer className="mt-12 pt-8 border-t border-stone-200 text-center text-sm text-stone-500">
-          <p>Con cariño, los novios · Precios referenciales de Novex Costa Rica</p>
+          <p>{S.footer}</p>
         </footer>
       </main>
 
@@ -248,7 +255,7 @@ const ItemCard = memo(function ItemCard({ item, remaining, reservations, onReser
         )}
         {isFull && (
           <div className="absolute top-3 right-3 text-xs px-2.5 py-1 bg-stone-900 text-stone-50 rounded-full flex items-center gap-1 shadow">
-            <Check className="w-3 h-3" /> Completo
+            <Check className="w-3 h-3" /> {S.card.full}
           </div>
         )}
         {!isFull && (
@@ -268,7 +275,7 @@ const ItemCard = memo(function ItemCard({ item, remaining, reservations, onReser
 
         {reservations.length > 0 && (
           <div className="mb-3 text-xs text-stone-500 italic">
-            Apartado por: {reservations.map((r) => `${r.name}${r.qty > 1 ? ` (${r.qty})` : ""}`).join(", ")}
+            {S.card.reservedBy} {reservations.map((r) => `${r.name}${r.qty > 1 ? ` (${r.qty})` : ""}`).join(", ")}
           </div>
         )}
 
@@ -282,7 +289,7 @@ const ItemCard = memo(function ItemCard({ item, remaining, reservations, onReser
                 : "bg-emerald-800 text-white hover:bg-emerald-900"
             }`}
           >
-            Apartar
+            {S.card.reserveBtn}
           </button>
           <a
             href={item.url}
@@ -290,7 +297,7 @@ const ItemCard = memo(function ItemCard({ item, remaining, reservations, onReser
             rel="noopener noreferrer"
             className="px-3 py-2.5 rounded-lg text-sm font-medium border border-stone-200 hover:border-stone-400 text-stone-700 flex items-center gap-1.5"
           >
-            Novex <ExternalLink className="w-3.5 h-3.5" />
+            {S.card.novexBtn} <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
@@ -322,16 +329,16 @@ function ReserveModal({ item, remaining, guestName, submitting, onClose, onConfi
         <h2 className="font-display text-2xl text-stone-900 leading-snug mb-1 font-medium">
           {item.name}
         </h2>
-        <p className="text-stone-500 text-sm mb-5">{formatCRC(item.price)} · {remaining} disponible{remaining !== 1 ? "s" : ""}</p>
+        <p className="text-stone-500 text-sm mb-5">{formatCRC(item.price)} · {S.modal.available(remaining)}</p>
 
         {!guestName.trim() && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
-            Por favor cierra esta ventana y escribe tu nombre arriba primero.
+            {S.modal.noNameWarning}
           </div>
         )}
 
         <div className="mb-5">
-          <label className="block text-xs uppercase tracking-wider text-stone-500 mb-3">Cantidad a apartar</label>
+          <label className="block text-xs uppercase tracking-wider text-stone-500 mb-3">{S.modal.qtyLabel}</label>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setQty(Math.max(1, qty - 1))}
@@ -348,14 +355,12 @@ function ReserveModal({ item, remaining, guestName, submitting, onClose, onConfi
             >
               <Plus className="w-4 h-4" />
             </button>
-            <span className="text-sm text-stone-500 ml-2">Total: {formatCRC(item.price * qty)}</span>
+            <span className="text-sm text-stone-500 ml-2">{S.modal.total} {formatCRC(item.price * qty)}</span>
           </div>
         </div>
 
         <div className="bg-stone-100 rounded-lg p-3 text-sm text-stone-600 mb-5">
-          <p className="leading-relaxed">
-            Apartar reserva el regalo a tu nombre. Luego puedes comprarlo en Novex usando el botón en la tarjeta.
-          </p>
+          <p className="leading-relaxed">{S.modal.instructions}</p>
         </div>
 
         <div className="flex gap-2">
@@ -364,14 +369,14 @@ function ReserveModal({ item, remaining, guestName, submitting, onClose, onConfi
             disabled={submitting}
             className="flex-1 px-4 py-3 rounded-lg border border-stone-300 text-stone-700 font-medium hover:bg-stone-100 disabled:opacity-50"
           >
-            Cancelar
+            {S.modal.cancelBtn}
           </button>
           <button
             onClick={() => onConfirm(qty)}
             disabled={!guestName.trim() || submitting}
             className="flex-1 px-4 py-3 rounded-lg bg-emerald-800 text-white font-medium hover:bg-emerald-900 disabled:bg-stone-300 disabled:cursor-not-allowed"
           >
-            {submitting ? "Apartando..." : `Apartar ${qty}`}
+            {submitting ? S.modal.reservingBtn : S.modal.reserveBtn(qty)}
           </button>
         </div>
       </div>

@@ -3,9 +3,10 @@ const img = (sku) => `https://ferreteriavidri.com/images/items/large/${sku}.jpg`
 
 export const ITEMS = [
   // Vajilla
-  { id: "478662", name: "Taza de cerámica 420ml Terre Verde", price: 2350, qty: 4, cat: "vajilla", img: img("478662"), url: "https://novex.cr/producto/478662/Taza-de-ceramica-420-ml-terre-verde.html" },
+  { id: "472968", name: "Tazas de ceramica surtida 250ml S/4", price: 4200, qty: 1, cat: "vajilla", img: img("472968"), url: "https://novex.cr/producto/472968/Tazas-de-ceramica-surtida-250-ml-s-4.html" },
   { id: "432796", name: "Vaso de vidrio 300ml Ella Café", price: 2100, qty: 8, cat: "vajilla", img: img("432796"), url: "https://novex.cr/producto/478686/Vaso-de-vidrio-300-ml-ella-cafe.html" },
   { id: "161222", name: "Pichel plástico 1.9L", price: 4950, qty: 1, cat: "vajilla", img: img("161222"), url: "https://novex.cr/producto/161222/Pichel-plastico-19-l.html" },
+  { id: "415739", name: "TAZA DE VIDRIO 8 OZ ICONIC PASABAHCE", price: 1490, qty: 4, cat:"vajilla", img: img("415739"), url: "https://novex.cr/producto/415739/Taza-de-vidrio-8-oz-iconic.html"},
 
   // Mesa
   { id: "145164", name: "Individual de mesa rayas verdes", price: 1200, qty: 3, cat: "mesa", img: img("145164"), url: "https://novex.cr/producto/145164/Individual-para-mesa-de-poliester-rayas-verdes.html" },
