@@ -1,7 +1,7 @@
-// Novex hosts product images at: https://ferreteriavidri.com/images/items/thumb/{SKU}.jpg
 const img = (sku) => `https://ferreteriavidri.com/images/items/large/${sku}.jpg`;
 
-export const ITEMS = [
+// Seed data — used only to populate Firestore the first time via the admin panel
+export const SEED_ITEMS = [
   // Vajilla
   { id: "472968", name: "Tazas de ceramica surtida 250ml S/4", price: 4200, qty: 1, cat: "vajilla", img: img("472968"), url: "https://novex.cr/producto/472968/Tazas-de-ceramica-surtida-250-ml-s-4.html" },
   { id: "432796", name: "Vaso de vidrio 300ml Ella Café", price: 2100, qty: 8, cat: "vajilla", img: img("432796"), url: "https://novex.cr/producto/478686/Vaso-de-vidrio-300-ml-ella-cafe.html" },

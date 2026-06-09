@@ -5,10 +5,12 @@ import {
   onSnapshot,
   addDoc,
   deleteDoc,
+  setDoc,
   doc,
   serverTimestamp,
   query,
   orderBy,
+  writeBatch,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -24,8 +26,42 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
 const RESERVATIONS = "reservations";
+const PRODUCTS = "products";
 
-// Subscribe to live reservations. Returns unsubscribe function.
+// ── Products ──────────────────────────────────────────────────────────────────
+
+export function subscribeProducts(callback) {
+  const q = query(collection(db, PRODUCTS), orderBy("order", "asc"));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const items = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+      callback(items);
+    },
+    (err) => console.error("Products subscribe error:", err)
+  );
+}
+
+export async function addProduct(product) {
+  const { id, ...data } = product;
+  return await setDoc(doc(db, PRODUCTS, id), data);
+}
+
+export async function deleteProduct(id) {
+  return await deleteDoc(doc(db, PRODUCTS, id));
+}
+
+export async function seedProducts(items) {
+  const batch = writeBatch(db);
+  items.forEach((item, i) => {
+    const { id, ...data } = item;
+    batch.set(doc(db, PRODUCTS, id), { ...data, order: i });
+  });
+  return await batch.commit();
+}
+
+// ── Reservations ──────────────────────────────────────────────────────────────
+
 export function subscribeReservations(callback) {
   const q = query(collection(db, RESERVATIONS), orderBy("ts", "asc"));
   return onSnapshot(
@@ -39,9 +75,7 @@ export function subscribeReservations(callback) {
       });
       callback(grouped);
     },
-    (err) => {
-      console.error("Firestore subscribe error:", err);
-    }
+    (err) => console.error("Firestore subscribe error:", err)
   );
 }
 

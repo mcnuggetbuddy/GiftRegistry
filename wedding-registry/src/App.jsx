@@ -9,14 +9,16 @@ import {
   Minus,
   ImageOff,
 } from "lucide-react";
-import { ITEMS, CATEGORIES, formatCRC } from "./data.js";
-import { subscribeReservations, addReservation } from "./firebase.js";
+import { CATEGORIES, formatCRC } from "./data.js";
+import { subscribeReservations, addReservation, subscribeProducts } from "./firebase.js";
 import { S } from "./strings.js";
 
 const NAME_KEY = "wedding_registry_guest_name";
 const EMPTY_ARR = [];
 
 export default function App() {
+  const [items, setItems] = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
   const [reservations, setReservations] = useState({});
   const [guestName, setGuestName] = useState(() => {
     try { return localStorage.getItem(NAME_KEY) || ""; } catch { return ""; }
@@ -25,9 +27,16 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [hideTaken, setHideTaken] = useState(false);
   const [modalItem, setModalItem] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = subscribeProducts((products) => {
+      setItems(products);
+      setItemsLoading(false);
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const unsubscribe = subscribeReservations((grouped) => {
@@ -51,19 +60,19 @@ export default function App() {
   );
 
   const filtered = useMemo(() => {
-    return ITEMS.filter((it) => {
+    return items.filter((it) => {
       if (activeCat !== "all" && it.cat !== activeCat) return false;
       if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
       if (hideTaken && remaining(it) === 0) return false;
       return true;
     });
-  }, [activeCat, search, hideTaken, remaining]);
+  }, [items, activeCat, search, hideTaken, remaining]);
 
   const stats = useMemo(() => {
-    const totalItems = ITEMS.reduce((s, it) => s + it.qty, 0);
-    const reservedItems = ITEMS.reduce((s, it) => s + reservedCount(it.id), 0);
+    const totalItems = items.reduce((s, it) => s + it.qty, 0);
+    const reservedItems = items.reduce((s, it) => s + reservedCount(it.id), 0);
     return { totalItems, reservedItems, available: totalItems - reservedItems };
-  }, [reservations]);
+  }, [items, reservations]);
 
   const showToast = (kind, msg) => {
     setToast({ kind, msg });
@@ -118,7 +127,7 @@ export default function App() {
               <strong>{stats.reservedItems}</strong> {S.stats.reserved}
             </span>
             <span className="px-3 py-1.5 rounded-full bg-white border border-stone-200">
-              <strong className="text-stone-900">{ITEMS.length}</strong> {S.stats.products}
+              <strong className="text-stone-900">{items.length}</strong> {S.stats.products}
             </span>
           </div>
         </div>
@@ -183,7 +192,7 @@ export default function App() {
         </div>
 
         {/* Grid */}
-        {loading ? (
+        {itemsLoading ? (
           <div className="text-center py-20 text-stone-400">{S.grid.loading}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-stone-400 font-display italic">{S.grid.empty}</div>
